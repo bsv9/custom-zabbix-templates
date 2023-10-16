@@ -1,0 +1,233 @@
+{
+    "zabbix_export": {
+        "version": "6.4",
+        "template_groups": [
+            {
+                "uuid": "a571c0d144b14fd4a87a9d9b2aa9fcd6",
+                "name": "Templates/Applications"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "f98c5d986a4b4f828afc61725642e9c2",
+                "template": "Wazuh Agent",
+                "name": "Wazuh Agent",
+                "groups": [
+                    {
+                        "name": "Templates/Applications"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "f7d202a524f84784a43a1e292a763a1d",
+                        "name": "Wazuh: Agent Group Config Status",
+                        "type": "DEPENDENT",
+                        "key": "wazuh.agent.group_config_status",
+                        "delay": "0",
+                        "history": "7d",
+                        "trends": "0",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.group_config_status"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "1h"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "wazuh.get.status"
+                        },
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "status"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "e7e9b39bcbc94462baf2ecd9f06828d4",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.group_config_status) = \"not synced\"",
+                                "name": "Wazuh Agent Config Not Synced",
+                                "priority": "WARNING",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "a79801b990ad4c5897e148e5a46e25fe",
+                        "name": "Wazuh: Agent status",
+                        "type": "DEPENDENT",
+                        "key": "wazuh.agent.status",
+                        "delay": "0",
+                        "history": "7d",
+                        "trends": "0",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.status"
+                                ],
+                                "error_handler": "CUSTOM_VALUE",
+                                "error_handler_params": "error"
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "1h"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "wazuh.get.status"
+                        },
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "status"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "474e7d11ca714556bec7595361f38cfa",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"disconnected\"",
+                                "name": "Wazuh Agent Disconnected",
+                                "priority": "AVERAGE",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "920b500f9a884412aab600183d178afc",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"never_connected\"",
+                                "name": "Wazuh Agent Never Connected",
+                                "priority": "WARNING",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "a182b2e142184d32a1187e49ef5365f0",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"pending\"",
+                                "name": "Wazuh Agent Pending",
+                                "priority": "WARNING",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "36a687d40db54a1e937f5e045c63af93",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"unavailable\"",
+                                "name": "Wazuh Agent Unavailable",
+                                "priority": "AVERAGE",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "85505e4f117a4ae4ab4a216ecfeb444e",
+                        "name": "Wazuh: Get agent info",
+                        "type": "SCRIPT",
+                        "key": "wazuh.get.status",
+                        "delay": "5m",
+                        "trends": "0",
+                        "value_type": "TEXT",
+                        "params": "var Wazuh = {\n    params: {},\n    token: '',\n\n    setParams: function (params) {\n        ['api_endpoint', 'user', 'password'].forEach(function (field) {\n            if (typeof params !== 'object' || typeof params[field] === 'undefined' || params[field] === '') {\n                throw 'Required param is not set: ' + field + '.';\n            }\n        });\n\n        Wazuh.params = params;\n        if (typeof Wazuh.params.api_endpoint === 'string' && !Wazuh.params.api_endpoint.endsWith('/')) {\n            Wazuh.params.api_endpoint += '/';\n        }\n    },\n\n    login: function () {\n\n        var resp, login = new HttpRequest();\n        if (typeof Wazuh.params.http_proxy !== 'undefined' && Wazuh.params.http_proxy !== '') {\n            login.setProxy(Wazuh.params.http_proxy);\n        }\n        login.setHttpAuth(HTTPAUTH_BASIC, Wazuh.params.user, Wazuh.params.password);\n        login.addHeader('Content-Type: application/x-www-form-urlencoded');\n        resp = login.post(Wazuh.params.api_endpoint+ 'security/user/authenticate?raw=true');\n\n        if (login.getStatus() !== 200 || resp === null) {\n            throw 'Login failed with status code ' + login.getStatus() + ': ' + resp;\n        }\n        Wazuh.token = resp;\n    },\n\n    request: function (url) {\n        var response, request = new HttpRequest();\n        if (typeof Wazuh.params.http_proxy !== 'undefined' && Wazuh.params.http_proxy !== '') {\n            request.setProxy(Wazuh.params.http_proxy);\n        }\n        if (Wazuh.token) {\n            request.addHeader('Authorization: Bearer ' + Wazuh.token);\n            response = request.get(url);\n        }\n        if (request.getStatus() !== 200 || response === null) {\n            throw 'Request failed with status code ' + request.getStatus() + ': ' + response;\n        }\n        try {\n            return JSON.parse(response);\n        }\n        catch (error) {\n            throw 'Failed to parse response received from API.';\n        } \n    },\n\n    agent_status: function() {\n        var data = {};\n\n        response = Wazuh.request(Wazuh.params.api_endpoint + \"agents?name=\" + Wazuh.params.hostname);\n        if (!response[\"data\"].hasOwnProperty('affected_items')) {\n            return {\"status\": \"unavailable\", \"group_config_status\": \"unavailable\"};\n        }\n        if (response[\"data\"]['affected_items'].length == 0) {\n            return {\"status\": \"unavailable\", \"group_config_status\": \"unavailable\"};\n        }\n        data = response[\"data\"][\"affected_items\"][0]\n        return data;\n    }\n};\n\ntry {\n    Wazuh.setParams(JSON.parse(value));\n    Wazuh.login();\n    status = Wazuh.agent_status();\n    return JSON.stringify(status);\n}\ncatch (error) {\n    error += (String(error).endsWith('.')) ? '' : '.';\n    Zabbix.log(3, '[ Wazuh ] ERROR: ' + error);\n    return JSON.stringify({\"error\": error, \"status\": \"undefined\"});\n}",
+                        "description": "The result of API requests is expressed in the JSON.",
+                        "timeout": "{$WAZUH.DATA.TIMEOUT}",
+                        "parameters": [
+                            {
+                                "name": "api_endpoint",
+                                "value": "{$WAZUH.API.URL}"
+                            },
+                            {
+                                "name": "http_proxy",
+                                "value": "{$WAZUH.HTTP.PROXY}"
+                            },
+                            {
+                                "name": "user",
+                                "value": "{$WAZUH.USER}"
+                            },
+                            {
+                                "name": "password",
+                                "value": "{$WAZUH.PASSWORD}"
+                            },
+                            {
+                                "name": "hostname",
+                                "value": "{HOST.NAME}"
+                            }
+                        ],
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    }
+                ],
+                "tags": [
+                    {
+                        "tag": "class",
+                        "value": "software"
+                    },
+                    {
+                        "tag": "target",
+                        "value": "wazuh"
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$WAZUH.API.URL}",
+                        "value": "",
+                        "description": "The Wazuh API endpoint is a URL in the format `<scheme>://<host>:<port>`."
+                    },
+                    {
+                        "macro": "{$WAZUH.DATA.TIMEOUT}",
+                        "value": "10",
+                        "description": "A response timeout for the API."
+                    },
+                    {
+                        "macro": "{$WAZUH.HTTP.PROXY}",
+                        "description": "Sets the HTTP proxy to `http_proxy` value. If this parameter is empty, then no proxy is used."
+                    },
+                    {
+                        "macro": "{$WAZUH.PASSWORD}",
+                        "value": "",
+                        "description": "The `password` of the Wazuh account. It is used to obtain an access token."
+                    },
+                    {
+                        "macro": "{$WAZUH.USER}",
+                        "value": "",
+                        "description": "The `user` of the Wazuh account. It is used to obtain an access token."
+                    }
+                ]
+            }
+        ]
+    }
+}
