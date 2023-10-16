@@ -1,5 +1,4 @@
 # Wazuh Agent via REST API
-Overview
 The template to monitor Wazuh Agent status that work without any external scripts. 
 
 ## Requirements
