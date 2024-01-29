@@ -53,7 +53,7 @@
                         "triggers": [
                             {
                                 "uuid": "e7e9b39bcbc94462baf2ecd9f06828d4",
-                                "expression": "last(/Wazuh Agent/wazuh.agent.group_config_status) = \"not synced\"",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.group_config_status) = \"not synced\" and last(/Wazuh Agent/wazuh.agent.group_config_status, #1) = \"not synced\"",
                                 "name": "Wazuh Agent Config Not Synced",
                                 "priority": "WARNING",
                                 "tags": [
@@ -102,7 +102,7 @@
                         "triggers": [
                             {
                                 "uuid": "474e7d11ca714556bec7595361f38cfa",
-                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"disconnected\"",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"disconnected\" and last(/Wazuh Agent/wazuh.agent.status, #1) = \"disconnected\"",
                                 "name": "Wazuh Agent Disconnected",
                                 "priority": "AVERAGE",
                                 "tags": [
@@ -114,7 +114,7 @@
                             },
                             {
                                 "uuid": "920b500f9a884412aab600183d178afc",
-                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"never_connected\"",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"never_connected\" and last(/Wazuh Agent/wazuh.agent.status, #1) = \"never_connected\"",
                                 "name": "Wazuh Agent Never Connected",
                                 "priority": "WARNING",
                                 "tags": [
@@ -126,7 +126,7 @@
                             },
                             {
                                 "uuid": "a182b2e142184d32a1187e49ef5365f0",
-                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"pending\"",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"pending\" and last(/Wazuh Agent/wazuh.agent.status, #1) = \"pending\"",
                                 "name": "Wazuh Agent Pending",
                                 "priority": "WARNING",
                                 "tags": [
@@ -138,7 +138,7 @@
                             },
                             {
                                 "uuid": "36a687d40db54a1e937f5e045c63af93",
-                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"unavailable\"",
+                                "expression": "last(/Wazuh Agent/wazuh.agent.status) = \"unavailable\" and\nlast(/Wazuh Agent/wazuh.agent.status, #1) = \"unavailable\"",
                                 "name": "Wazuh Agent Unavailable",
                                 "priority": "AVERAGE",
                                 "tags": [
@@ -155,7 +155,8 @@
                         "name": "Wazuh: Get agent info",
                         "type": "SCRIPT",
                         "key": "wazuh.get.status",
-                        "delay": "5m",
+                        "delay": "10m",
+                        "history": "0",
                         "trends": "0",
                         "value_type": "TEXT",
                         "params": "var Wazuh = {\n    params: {},\n    token: '',\n\n    setParams: function (params) {\n        ['api_endpoint', 'user', 'password'].forEach(function (field) {\n            if (typeof params !== 'object' || typeof params[field] === 'undefined' || params[field] === '') {\n                throw 'Required param is not set: ' + field + '.';\n            }\n        });\n\n        Wazuh.params = params;\n        if (typeof Wazuh.params.api_endpoint === 'string' && !Wazuh.params.api_endpoint.endsWith('/')) {\n            Wazuh.params.api_endpoint += '/';\n        }\n    },\n\n    login: function () {\n\n        var resp, login = new HttpRequest();\n        if (typeof Wazuh.params.http_proxy !== 'undefined' && Wazuh.params.http_proxy !== '') {\n            login.setProxy(Wazuh.params.http_proxy);\n        }\n        login.setHttpAuth(HTTPAUTH_BASIC, Wazuh.params.user, Wazuh.params.password);\n        login.addHeader('Content-Type: application/x-www-form-urlencoded');\n        resp = login.post(Wazuh.params.api_endpoint+ 'security/user/authenticate?raw=true');\n\n        if (login.getStatus() !== 200 || resp === null) {\n            throw 'Login failed with status code ' + login.getStatus() + ': ' + resp;\n        }\n        Wazuh.token = resp;\n    },\n\n    request: function (url) {\n        var response, request = new HttpRequest();\n        if (typeof Wazuh.params.http_proxy !== 'undefined' && Wazuh.params.http_proxy !== '') {\n            request.setProxy(Wazuh.params.http_proxy);\n        }\n        if (Wazuh.token) {\n            request.addHeader('Authorization: Bearer ' + Wazuh.token);\n            response = request.get(url);\n        }\n        if (request.getStatus() !== 200 || response === null) {\n            throw 'Request failed with status code ' + request.getStatus() + ': ' + response;\n        }\n        try {\n            return JSON.parse(response);\n        }\n        catch (error) {\n            throw 'Failed to parse response received from API.';\n        } \n    },\n\n    agent_status: function() {\n        var data = {};\n\n        response = Wazuh.request(Wazuh.params.api_endpoint + \"agents?name=\" + Wazuh.params.hostname);\n        if (!response[\"data\"].hasOwnProperty('affected_items')) {\n            return {\"status\": \"unavailable\", \"group_config_status\": \"unavailable\"};\n        }\n        if (response[\"data\"]['affected_items'].length == 0) {\n            return {\"status\": \"unavailable\", \"group_config_status\": \"unavailable\"};\n        }\n        data = response[\"data\"][\"affected_items\"][0]\n        return data;\n    }\n};\n\ntry {\n    Wazuh.setParams(JSON.parse(value));\n    Wazuh.login();\n    status = Wazuh.agent_status();\n    return JSON.stringify(status);\n}\ncatch (error) {\n    error += (String(error).endsWith('.')) ? '' : '.';\n    Zabbix.log(3, '[ Wazuh ] ERROR: ' + error);\n    return JSON.stringify({\"error\": error, \"status\": \"undefined\"});\n}",
@@ -167,26 +168,42 @@
                                 "value": "{$WAZUH.API.URL}"
                             },
                             {
-                                "name": "http_proxy",
-                                "value": "{$WAZUH.HTTP.PROXY}"
+                                "name": "hostname",
+                                "value": "{HOST.NAME}"
                             },
                             {
-                                "name": "user",
-                                "value": "{$WAZUH.USER}"
+                                "name": "http_proxy",
+                                "value": "{$WAZUH.HTTP.PROXY}"
                             },
                             {
                                 "name": "password",
                                 "value": "{$WAZUH.PASSWORD}"
                             },
                             {
-                                "name": "hostname",
-                                "value": "{HOST.NAME}"
+                                "name": "user",
+                                "value": "{$WAZUH.USER}"
                             }
                         ],
                         "tags": [
                             {
                                 "tag": "component",
                                 "value": "raw"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "f92895374f33479682eb8b9a5badf11d",
+                                "expression": "nodata(/Wazuh Agent/wazuh.get.status, 600)",
+                                "name": "Wazuh Agent No Data",
+                                "event_name": "Wazuh Agent No Data",
+                                "status": "DISABLED",
+                                "priority": "WARNING",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
                             }
                         ]
                     }
