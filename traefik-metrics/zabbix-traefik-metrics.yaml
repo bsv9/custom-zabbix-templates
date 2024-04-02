@@ -1,0 +1,399 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: a8b14c3fddeb4f278e966e6d2c523e05
+      template: 'Traefik Metrics'
+      name: 'Traefik Metrics'
+      description: 'The template to monitor Traefik Metrics by Zabbix that work without any external scripts.'
+      groups:
+        - name: Templates/Applications
+      items:
+        - uuid: 72d8d9c97db041b88667409000aa3656
+          name: 'Traefik: Get metrics'
+          key: 'web.page.get["{$TRAEFIK.API}"]'
+          history: 1h
+          trends: '0'
+          value_type: TEXT
+          description: 'The HTTP API endpoint that returns metrics.'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '\n\s?\n([\s\S]*)'
+                - \1
+          tags:
+            - tag: component
+              value: raw
+      discovery_rules:
+        - uuid: 0db764fbee3e4d22a6b79b5d38ffd192
+          name: 'Traefik: 4xx Requests'
+          type: DEPENDENT
+          key: traefik.reqests.4xx
+          delay: '0'
+          lifetime: 1h
+          item_prototypes:
+            - uuid: 81c58da0aec042aba673c844401598ee
+              name: 'Traefik: Service Requests {#TRAEFIK_SERVICE} - 4xx Errors'
+              type: CALCULATED
+              key: 'traefik.service_requests.4xx[{"{#TRAEFIK_SERVICE}"]'
+              params: '{#REQ_COUNTER}'
+              preprocessing:
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              tags:
+                - tag: component
+                  value: service
+                - tag: service
+                  value: '{#TRAEFIK_SERVICE}'
+              trigger_prototypes:
+                - uuid: ce1a35af981d45339cde4173ca208b37
+                  expression: 'sum(/Traefik Metrics/traefik.service_requests.4xx[{"{#TRAEFIK_SERVICE}"], 5m) > {$TRAEFIK.4XX_ERRORS} and {$TRAEFIK.4XX_ERRORS} <> "0"'
+                  name: 'Traefik: Service Requests {#TRAEFIK_SERVICE} - 4xx Errors more than {$TRAEFIK.4XX_ERRORS}/5min'
+                  priority: WARNING
+          graph_prototypes:
+            - uuid: 3560b5c1d1af423c96d5f9f80431ba80
+              name: '4xx Requests'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: 'Traefik Metrics'
+                    key: 'traefik.service_requests.4xx[{"{#TRAEFIK_SERVICE}"]'
+          master_item:
+            key: 'web.page.get["{$TRAEFIK.API}"]'
+          lld_macro_paths:
+            - lld_macro: '{#REQ_COUNTER}'
+              path: $.value
+            - lld_macro: '{#TRAEFIK_SERVICE}'
+              path: $.service
+            - lld_macro: '{#TRAEFIK_STATUS}'
+              path: $.status
+          preprocessing:
+            - type: PROMETHEUS_TO_JSON
+              parameters:
+                - 'traefik_service_requests_total{service=~".*", code=~".*"}'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = {};
+                  var result2 = [];
+                  
+                  data.forEach(function (item) {
+                    first_code = item.labels.code.slice(0,1);
+                    if (first_code == "4") {
+                  
+                      key = item.labels.service + " - " + first_code + "xx status";
+                      value = Number(item.value);
+                  
+                      if (!result[key]) {
+                        result[key] = {"item": key, "value": 0, "status": (first_code + "xx"), "service": item.labels.service};
+                      }
+                  
+                      result[key]["value"] += value;
+                    }
+                  })
+                  
+                  Object.keys(result).forEach(function(key) {
+                    result2.push({"item": key, "value": result[key]["value"], "status": result[key]["status"], "service": result[key]["service"]});
+                  });
+                  
+                  return JSON.stringify(result2);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 3h
+        - uuid: eefc4f9c4e7e4cebbc0d7b2aba3485e7
+          name: 'Traefik: 5xx Requests'
+          type: DEPENDENT
+          key: traefik.reqests.5xx
+          delay: '0'
+          lifetime: 1h
+          item_prototypes:
+            - uuid: 0f5132dd4e3c4563b75cec184c6e0327
+              name: 'Traefik: Service Requests {#TRAEFIK_SERVICE} - 5xx Errors'
+              type: CALCULATED
+              key: 'traefik.service_requests.5xx[{"{#TRAEFIK_SERVICE}"]'
+              params: '{#REQ_COUNTER}'
+              preprocessing:
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              tags:
+                - tag: component
+                  value: service
+                - tag: service
+                  value: '{#TRAEFIK_SERVICE}'
+              trigger_prototypes:
+                - uuid: d176d492b65540aabfb9f51e6a19c380
+                  expression: 'sum(/Traefik Metrics/traefik.service_requests.5xx[{"{#TRAEFIK_SERVICE}"], 5m) > {$TRAEFIK.5XX_ERRORS} and {$TRAEFIK.5XX_ERRORS} <> "0"'
+                  name: 'Traefik: Service Requests {#TRAEFIK_SERVICE} - 5xx Errors more than {$TRAEFIK.5XX_ERRORS}/5min'
+                  priority: WARNING
+          graph_prototypes:
+            - uuid: 4d6b6b7cbfbf461cb660ad618661a9a5
+              name: '5xx Requests'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: 'Traefik Metrics'
+                    key: 'traefik.service_requests.5xx[{"{#TRAEFIK_SERVICE}"]'
+          master_item:
+            key: 'web.page.get["{$TRAEFIK.API}"]'
+          lld_macro_paths:
+            - lld_macro: '{#REQ_COUNTER}'
+              path: $.value
+            - lld_macro: '{#TRAEFIK_SERVICE}'
+              path: $.service
+            - lld_macro: '{#TRAEFIK_STATUS}'
+              path: $.status
+          preprocessing:
+            - type: PROMETHEUS_TO_JSON
+              parameters:
+                - 'traefik_service_requests_total{service=~".*", code=~".*"}'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = {};
+                  var result2 = [];
+                  
+                  data.forEach(function (item) {
+                    first_code = item.labels.code.slice(0,1);
+                    if (first_code == "5") {
+                  
+                      key = item.labels.service + " - " + first_code + "xx status";
+                      value = Number(item.value);
+                  
+                      if (!result[key]) {
+                        result[key] = {"item": key, "value": 0, "status": (first_code + "xx"), "service": item.labels.service};
+                      }
+                  
+                      result[key]["value"] += value;
+                    }
+                  })
+                  
+                  Object.keys(result).forEach(function(key) {
+                    result2.push({"item": key, "value": result[key]["value"], "status": result[key]["status"], "service": result[key]["service"]});
+                  });
+                  
+                  return JSON.stringify(result2);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 3h
+        - uuid: b9fe073ebdd64893ba0bb56d60507213
+          name: 'Traefik: Requests'
+          type: DEPENDENT
+          key: traefik.reqests.all
+          delay: '0'
+          lifetime: 1h
+          item_prototypes:
+            - uuid: 86813d1e4d81430dbdae6c5306f9ab65
+              name: 'Traefik: Service Requests {#TRAEFIK_SERVICE}'
+              type: CALCULATED
+              key: 'traefik.service_requests.all[{"{#TRAEFIK_SERVICE}"]'
+              params: '{#REQ_COUNTER}'
+              preprocessing:
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              tags:
+                - tag: component
+                  value: service
+                - tag: service
+                  value: '{#TRAEFIK_SERVICE}'
+          graph_prototypes:
+            - uuid: 5b0f640ab2174a16b136c822aff68206
+              name: 'Total Requests'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: 'Traefik Metrics'
+                    key: 'traefik.service_requests.all[{"{#TRAEFIK_SERVICE}"]'
+          master_item:
+            key: 'web.page.get["{$TRAEFIK.API}"]'
+          lld_macro_paths:
+            - lld_macro: '{#REQ_COUNTER}'
+              path: $.value
+            - lld_macro: '{#TRAEFIK_SERVICE}'
+              path: $.service
+          preprocessing:
+            - type: PROMETHEUS_TO_JSON
+              parameters:
+                - 'traefik_service_requests_total{service=~".*"}'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = {};
+                  var result2 = [];
+                  
+                  data.forEach(function (item) {
+                    first_code = item.labels.code.slice(0,1);
+                  
+                    key = item.labels.service;
+                    value = Number(item.value);
+                  
+                    if (!result[key]) {
+                      result[key] = {"item": key, "value": 0, "service": item.labels.service};
+                    }
+                  
+                    result[key]["value"] += value;
+                  })
+                  Object.keys(result).forEach(function(key) {
+                    result2.push({"item": key, "value": result[key]["value"], "service": result[key]["service"]});
+                  });
+                  
+                  return JSON.stringify(result2);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 3h
+        - uuid: aada7ce63e5441a495c97693a733bcdd
+          name: 'Traefik: Response bytes'
+          type: DEPENDENT
+          key: traefik.service_response_bytes
+          delay: '0'
+          item_prototypes:
+            - uuid: 28313e7a68bd4680bfa0087866ac023b
+              name: 'Traefik: Service Reponse bytes {#TRAEFIK_SERVICE}'
+              type: CALCULATED
+              key: 'traefik.reponse_bytes.all[{"{#TRAEFIK_SERVICE}"]'
+              params: '{#RESPONSE_COUNTER}'
+              preprocessing:
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              tags:
+                - tag: component
+                  value: service
+                - tag: service
+                  value: '{#TRAEFIK_SERVICE}'
+          graph_prototypes:
+            - uuid: 44704626cd384ca1b1473be6d04c48bb
+              name: 'Response bytes'
+              graph_items:
+                - drawtype: GRADIENT_LINE
+                  color: 1A7C11
+                  item:
+                    host: 'Traefik Metrics'
+                    key: 'traefik.reponse_bytes.all[{"{#TRAEFIK_SERVICE}"]'
+          master_item:
+            key: 'web.page.get["{$TRAEFIK.API}"]'
+          lld_macro_paths:
+            - lld_macro: '{#RESPONSE_COUNTER}'
+              path: $.value
+            - lld_macro: '{#TRAEFIK_SERVICE}'
+              path: $.service
+          preprocessing:
+            - type: PROMETHEUS_TO_JSON
+              parameters:
+                - 'traefik_service_responses_bytes_total{service=~".*"}'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = {};
+                  var result2 = [];
+                  
+                  data.forEach(function (item) {
+                    first_code = item.labels.code.slice(0,1);
+                  
+                    key = item.labels.service;
+                    value = Number(item.value);
+                  
+                    if (!result[key]) {
+                      result[key] = {"item": key, "value": 0, "service": item.labels.service};
+                    }
+                  
+                    result[key]["value"] += value;
+                  })
+                  Object.keys(result).forEach(function(key) {
+                    result2.push({"item": key, "value": result[key]["value"], "service": result[key]["service"]});
+                  });
+                  
+                  return JSON.stringify(result2);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 3h
+      macros:
+        - macro: '{$TRAEFIK.4XX_ERRORS}'
+          value: '0'
+          description: '4xx requests per 5 minute'
+        - macro: '{$TRAEFIK.5XX_ERRORS}'
+          value: '0'
+          description: '5xx requests per 5 minute'
+        - macro: '{$TRAEFIK.API}'
+          value: 'http://proxy:8082'
+          description: 'e.g. http://localhost:8002'
+      dashboards:
+        - uuid: d3a3519cfb5749e58198ae00a8b85b35
+          name: 'Traefik Requests'
+          pages:
+            - widgets:
+                - type: graphprototype
+                  width: '12'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: columns
+                      value: '1'
+                    - type: ITEM_PROTOTYPE
+                      name: itemid
+                      value:
+                        host: 'Traefik Metrics'
+                        key: 'traefik.reponse_bytes.all[{"{#TRAEFIK_SERVICE}"]'
+                    - type: INTEGER
+                      name: source_type
+                      value: '3'
+                - type: graphprototype
+                  'y': '5'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: columns
+                      value: '1'
+                    - type: ITEM_PROTOTYPE
+                      name: itemid
+                      value:
+                        host: 'Traefik Metrics'
+                        key: 'traefik.service_requests.4xx[{"{#TRAEFIK_SERVICE}"]'
+                    - type: INTEGER
+                      name: source_type
+                      value: '3'
+                - type: graphprototype
+                  x: '12'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: columns
+                      value: '1'
+                    - type: ITEM_PROTOTYPE
+                      name: itemid
+                      value:
+                        host: 'Traefik Metrics'
+                        key: 'traefik.service_requests.all[{"{#TRAEFIK_SERVICE}"]'
+                    - type: INTEGER
+                      name: source_type
+                      value: '3'
+                - type: graphprototype
+                  x: '12'
+                  'y': '5'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: columns
+                      value: '1'
+                    - type: ITEM_PROTOTYPE
+                      name: itemid
+                      value:
+                        host: 'Traefik Metrics'
+                        key: 'traefik.service_requests.5xx[{"{#TRAEFIK_SERVICE}"]'
+                    - type: INTEGER
+                      name: source_type
+                      value: '3'
