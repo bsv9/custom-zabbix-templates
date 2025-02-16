@@ -1,0 +1,95 @@
+zabbix_export:
+  version: '7.2'
+  template_groups:
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: 70687847834e4d089d058b61737655a2
+      template: Oxidized
+      name: Oxidized
+      groups:
+        - name: Templates/Applications
+      discovery_rules:
+        - uuid: c8b7b1de2f2047938584b404d11a22b8
+          name: 'Get Oxidied Nodes'
+          type: HTTP_AGENT
+          key: oxidized.discovery
+          delay: 1h
+          authtype: BASIC
+          username: '{$OXIDIZED.USERNAME}'
+          password: '{$OXIDIZED.PASSWORD}'
+          filter:
+            conditions:
+              - macro: '{#NODE.NAME}'
+                value: '{$OXIDIZED.NAME.MATCHES}'
+              - macro: '{#NODE.NAME}'
+                value: '{$OXIDIZED.NAME.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+          item_prototypes:
+            - uuid: 1f8c4bb8c9d44f99a406c6745e6cbd66
+              name: 'Last backup configuration - {#NODE.NAME}'
+              type: CALCULATED
+              key: 'oxidized.mtime[{#NODE.NAME}]'
+              delay: 10m
+              value_type: TEXT
+              params: '{#NODE.MOD_TIME}'
+              tags:
+                - tag: scope
+                  value: availability
+              trigger_prototypes:
+                - uuid: 4cdd62431ba04473a9e7f1a22951d500
+                  expression: 'last(/Oxidized/oxidized.mtime[{#NODE.NAME}], #1) <> last(/Oxidized/oxidized.mtime[{#NODE.NAME}], #2)'
+                  name: 'Configuration was changed - {#NODE.NAME}'
+                  priority: WARNING
+            - uuid: d97522f4dfa54fc28e5318ee7ce86d0f
+              name: 'Configuration backup status - {#NODE.NAME}'
+              type: CALCULATED
+              key: 'oxidized.status[{#NODE.NAME}]'
+              delay: 10m
+              value_type: TEXT
+              params: '{#NODE.STATUS}'
+              tags:
+                - tag: scope
+                  value: availability
+              trigger_prototypes:
+                - uuid: 204b2a958cb54bad988ebefe6dcd3907
+                  expression: 'last(/Oxidized/oxidized.status[{#NODE.NAME}]) <> "success"'
+                  name: 'No successful backups found - {#NODE.NAME}'
+                  priority: WARNING
+          url: '{$OXIDIZED.BASE_URL}/nodes.json'
+          lld_macro_paths:
+            - lld_macro: '{#NODE.BACKUP_TIME}'
+              path: $.time
+            - lld_macro: '{#NODE.FULL_NAME}'
+              path: $.full_name
+            - lld_macro: '{#NODE.GROUP}'
+              path: $.group
+            - lld_macro: '{#NODE.IP}'
+              path: $.ip
+            - lld_macro: '{#NODE.MODEL}'
+              path: $.model
+            - lld_macro: '{#NODE.MOD_TIME}'
+              path: $.mtime
+            - lld_macro: '{#NODE.NAME}'
+              path: $.name
+            - lld_macro: '{#NODE.STATUS}'
+              path: $.status
+      tags:
+        - tag: class
+          value: software
+        - tag: target
+          value: oxidized
+      macros:
+        - macro: '{$OXIDIZED.BASE_URL}'
+          description: 'Base Oxidized URL in the format `<scheme>://<host>:<port>`.'
+        - macro: '{$OXIDIZED.NAME.MATCHES}'
+          value: '.*'
+          description: 'Filter of items by name'
+        - macro: '{$OXIDIZED.NAME.NOT_MATCHES}'
+          value: CHANGE_IF_NEEDED
+          description: 'Filter of items by name'
+        - macro: '{$OXIDIZED.PASSWORD}'
+          type: SECRET_TEXT
+          description: 'Password for basic authn'
+        - macro: '{$OXIDIZED.USERNAME}'
+          description: 'Username for basic authn'
