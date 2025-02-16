@@ -1,5 +1,5 @@
 # Configuration Backup Monitoring via Oxidized
-A template for monitoring configuration backups via Oxidized. Also notify when changes are made to the configuration.”
+A template for monitoring configuration backups via Oxidized. Also notify when changes are made to the configuration.
 
 ## Requirements
 Zabbix version: 7.0 and higher.
