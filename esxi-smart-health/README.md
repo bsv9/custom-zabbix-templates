@@ -33,7 +33,7 @@ This template has been tested on:
 
 2. Install smartmontools to the server
 
-https://github.com/bsv9/smartctl-esxi-vib
+[VIB(vSphere Installation Bundle) with smartctl for esxi 7/8](https://github.com/bsv9/smartctl-esxi-vib)
 
 3. Put your SSH key to the esxi server
 
