@@ -1,0 +1,266 @@
+zabbix_export:
+  version: '7.2'
+  template_groups:
+    - uuid: e960332b3f6c46a1956486d4f3f99fce
+      name: 'Templates/Server hardware'
+  templates:
+    - uuid: 7b7a20b0b78f4c39943676b9ab669610
+      template: 'ESXI NVME Health'
+      name: 'ESXI NVME Health'
+      description: 'This Zabbix template is designed to monitor the health and performance of NVMe storage devices in VMware ESXi environments.'
+      groups:
+        - name: 'Templates/Server hardware'
+      items:
+        - uuid: ad5c0205fbea4d04a5117b9d46a36319
+          name: 'Get NVME Devices'
+          type: SSH
+          key: 'ssh.run[nvme]'
+          delay: 1h
+          history: 30d
+          value_type: TEXT
+          params: '/bin/localcli nvme device list'
+          authtype: PUBLIC_KEY
+          username: root
+          publickey: '{$ESXI.SSH.KEY}.pub'
+          privatekey: '{$ESXI.SSH.KEY}'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  const lines = value.split('\n');
+                  const data = [];
+                  const data2 = [];
+                  
+                  lines.forEach(function(line) {
+                      if (line.startsWith('vm')) {
+                          // Zabbix.Log(3, '[ Get NVME Devices ] Got line ' + line);
+                          const columns = line.trim().split(/\s+/); // Split by whitespace
+                          data.push({ "{#HBA}": columns[0] });
+                      }
+                  });
+                  
+                  return JSON.stringify(data, null, 4);
+          tags:
+            - tag: component
+              value: raw
+      discovery_rules:
+        - uuid: 42ef287ed31e4eb0be42052fdab086a7
+          name: 'NVME DIscovery'
+          type: DEPENDENT
+          key: nvme.discovery
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: e388fbb64a0e45c680838eabe5c9e25d
+              name: 'NVME {#HBA} AvailableSpare'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},AvailableSpare]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.AvailableSpare
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: 3a4462f002414501bf78fb0e0186f081
+              name: 'NVME {#HBA} CompositeTemperature'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},CompositeTemperature]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.CompositeTemperature
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: b693cd0efd3642918533678f49e95651
+              name: 'NVME {#HBA} ControllerBusyTime'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},ControllerBusyTime]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.ControllerBusyTime
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: 088e7f204210475fa807ce7e76c0fcf3
+              name: 'NVME {#HBA} MediaErrors'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},MediaErrors]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.MediaErrors
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: 48ede9ac82744ed69e6e15704b791eb0
+              name: 'NVME {#HBA} PercentageUsed'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},PercentageUsed]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.PercentageUsed
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: 1c4537245be04a1483d2e1f151595b8b
+              name: 'NVME {#HBA} PowerCycles'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},PowerCycles]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.PowerCycles
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: 030312a04a8744ab8e1c8906fa6d2711
+              name: 'NVME {#HBA} Power On Hours'
+              type: DEPENDENT
+              key: 'nvme.health[{#HBA},PowerOnHours]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.PowerOnHours
+              master_item:
+                key: 'ssh.run[{#HBA}]'
+              tags:
+                - tag: component
+                  value: nvme
+            - uuid: e8cf285b7ede4349ba03479533df96b6
+              name: 'NVME Info {#HBA}'
+              type: SSH
+              key: 'ssh.run[{#HBA}]'
+              delay: 5m
+              history: '0'
+              value_type: TEXT
+              params: '/bin/localcli nvme device log smart get --adapter {#HBA}'
+              authtype: PUBLIC_KEY
+              username: root
+              publickey: '{$ESXI.SSH.KEY}.pub'
+              privatekey: '{$ESXI.SSH.KEY}'
+              description: |
+                Example produced fields
+                
+                {
+                  "TemperatureWarning": false,
+                  "NVMSubsystemReliabilityDegradation": false,
+                  "ReadOnlyMode": false,
+                  "VolatileMemoryBackupDeviceFailure": false,
+                  "CompositeTemperature": 33.85000000000002,
+                  "AvailableSpare": 100,
+                  "AvailableSpareThreshold": 10,
+                  "PercentageUsed": 0,
+                  "DataUnitsRead": 6498243,
+                  "DataUnitsWritten": 6372135,
+                  "HostReadCommands": 113335586,
+                  "HostWriteCommands": 114159071,
+                  "ControllerBusyTime": 60,
+                  "PowerCycles": 24,
+                  "PowerOnHours": 43,
+                  "UnsafeShutdowns": 15,
+                  "MediaErrors": 0,
+                  "NumberofErrorInfoLogEntries": 0,
+                  "WarningCompositeTemperatureTime": 0,
+                  "CriticalCompositeTemperatureTime": 0,
+                  "TemperatureSensor1": 33.85000000000002,
+                  "TemperatureSensor2": 42.85000000000002,
+                  "TemperatureSensor3": -273.15,
+                  "TemperatureSensor4": -273.15,
+                  "TemperatureSensor5": -273.15,
+                  "TemperatureSensor6": -273.15,
+                  "TemperatureSensor7": -273.15,
+                  "TemperatureSensor8": -273.15
+                }
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      var params = value.split('\n');
+                      
+                      // Check if required parameters are provided
+                      if (params.length < 2) {
+                          throw new Error("Please specify hostname and hba");
+                      }
+                      
+                      var hostname = params[0];
+                      var hba = params[1];
+                      
+                      var result = {};
+                      var lines = value.split('\n').slice(2); // Skip the first two lines which are parameters
+                      
+                      for (var i = 0; i < lines.length; i++) {
+                          var line = lines[i].trim();
+                          
+                          // Skip the header line
+                          if (line === "SMART And Health Info::" || line === "") continue;
+                          
+                          var tmpArr = line.split(': ');
+                          
+                          if (tmpArr.length === 1) continue;
+                          
+                          var key = tmpArr[0];
+                          var val = tmpArr[1];
+                          
+                          // Process the value based on its format
+                          var processedVal;
+                          
+                          if (val.endsWith(" K")) {
+                              // Temperature values in Kelvin - convert to Celsius
+                              processedVal = parseInt(val.replace(" K", "")) - 273.15;
+                          } else if (val.endsWith(" %")) {
+                              // Percentage values
+                              processedVal = parseFloat(val.replace(" %", ""));
+                          } else if (val.endsWith(" Mins")) {
+                              // Time values in minutes
+                              processedVal = parseInt(val.replace(" Mins", ""));
+                          } else if (val.match(/^0x[0-9a-fA-F]+$/)) {
+                              // Hex values
+                              processedVal = parseInt(val, 16);
+                          } else if (val === "true" || val === "false") {
+                              // Boolean values
+                              processedVal = val === "true";
+                          } else {
+                              // Any other format, keep as is
+                              processedVal = val;
+                          }
+                          
+                          // Convert key to camelCase without spaces for JSON
+                          var jsonKey = key.replace(/ /g, "");
+                          
+                          result[jsonKey] = processedVal;
+                      }
+                      
+                      // Return the result as JSON
+                      return JSON.stringify(result);
+              tags:
+                - tag: component
+                  value: nvme
+          master_item:
+            key: 'ssh.run[nvme]'
+      macros:
+        - macro: '{$ESXI.SSH.KEY}'
+          value: esxi
+          description: 'SSH root key name'

@@ -1,0 +1,244 @@
+zabbix_export:
+  version: '7.2'
+  template_groups:
+    - uuid: e960332b3f6c46a1956486d4f3f99fce
+      name: 'Templates/Server hardware'
+  templates:
+    - uuid: b2b0b200a2bd4011a018842e3aeedd7a
+      template: 'ESXI SMART Health'
+      name: 'ESXI SMART Health'
+      description: 'This Zabbix template is designed to monitor the health and performance of HDD storage devices in VMware ESXi environments.'
+      groups:
+        - name: 'Templates/Server hardware'
+      items:
+        - uuid: 03c2e0293eb84eb4b01a7b2a62a67c68
+          name: 'Get HDD Devices'
+          type: SSH
+          key: 'ssh.run[smart]'
+          delay: 1h
+          history: 30d
+          value_type: TEXT
+          params: 'ls -1 /dev/disks | grep t10.ATA | grep -v '':'''
+          authtype: PUBLIC_KEY
+          username: root
+          publickey: '{$ESXI.SSH.KEY}.pub'
+          privatekey: '{$ESXI.SSH.KEY}'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // Convert raw disk output to Zabbix LLD format with serial number extraction
+                  var lines = value.trim().split('\n');
+                  var result = {"data": []};
+                  
+                  // Process each line and add to result
+                  for (var i = 0; i < lines.length; i++) {
+                      var diskId = lines[i].trim();
+                      if (diskId) {
+                          // Extract the serial number (last segment before trailing underscores)
+                          var parts = diskId.split('_');
+                          var serialNumber = '';
+                          
+                          // Find the last non-empty segment (ignoring trailing underscores)
+                          for (var j = parts.length - 1; j >= 0; j--) {
+                              if (parts[j] !== '') {
+                                  serialNumber = parts[j];
+                                  break;
+                              }
+                          }
+                          
+                          result.data.push({
+                              "{#DISK_ID}": diskId,
+                              "{#DISK_SERIAL}": serialNumber
+                          });
+                      }
+                  }
+                  
+                  return JSON.stringify(result);
+      discovery_rules:
+        - uuid: 44483c837354490787a6e6ca4be6411f
+          name: 'SMART DIscovery'
+          type: DEPENDENT
+          key: smart.discovery
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: b029f8eb447d44a59dadb18568144425
+              name: 'SMART {#DISK_SERIAL} Current Pending Sector'
+              type: DEPENDENT
+              key: 'smart.status[{#DISK_ID},Current_Pending_Sector]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.Current_Pending_Sector
+              master_item:
+                key: 'ssh.run[{#DISK_ID}]'
+              tags:
+                - tag: component
+                  value: smart
+              trigger_prototypes:
+                - uuid: 506492977edd41d4bc420e2e8ec307d1
+                  expression: 'last(/ESXI SMART Health/smart.status[{#DISK_ID},Current_Pending_Sector])>0'
+                  name: 'SMART {#NAME}: Current Pending Sector'
+                  priority: AVERAGE
+            - uuid: 2d9881b2cbcf4ef9bedf9f63224366ca
+              name: 'SMART {#DISK_SERIAL} Offline Uncorrectable'
+              type: DEPENDENT
+              key: 'smart.status[{#DISK_ID},Offline_Uncorrectable]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.Offline_Uncorrectable
+              master_item:
+                key: 'ssh.run[{#DISK_ID}]'
+              tags:
+                - tag: component
+                  value: smart
+            - uuid: 52881f5730fe4a0dbe928a259d4870cb
+              name: 'SMART {#DISK_SERIAL} Power On Hours'
+              type: DEPENDENT
+              key: 'smart.status[{#DISK_ID},Power_On_Hours]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.Power_On_Hours
+              master_item:
+                key: 'ssh.run[{#DISK_ID}]'
+              tags:
+                - tag: component
+                  value: smart
+            - uuid: b9259c42faee479387230916e5f7c163
+              name: 'SMART {#DISK_SERIAL} Reallocated Sector Count'
+              type: DEPENDENT
+              key: 'smart.status[{#DISK_ID},Reallocated_Sector_Ct]'
+              history: 90d
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.Reallocated_Sector_Ct
+              master_item:
+                key: 'ssh.run[{#DISK_ID}]'
+              tags:
+                - tag: component
+                  value: smart
+            - uuid: 46c2e25aa8a148d693b7bcde0857ab29
+              name: 'SMART Info {#DISK_SERIAL}'
+              type: SSH
+              key: 'ssh.run[{#DISK_ID}]'
+              delay: 1h
+              history: '0'
+              value_type: TEXT
+              params: '/opt/smartmontools/smartctl -s on  -d sat,auto -A /dev/disks/{#DISK_ID}'
+              authtype: PUBLIC_KEY
+              username: root
+              publickey: '{$ESXI.SSH.KEY}.pub'
+              privatekey: '{$ESXI.SSH.KEY}'
+              description: |
+                Example output
+                
+                {
+                  "Raw_Read_Error_Rate": "0",
+                  "Spin_Up_Time": "317",
+                  "Start_Stop_Count": "111",
+                  "Reallocated_Sector_Ct": "0",
+                  "Power_On_Hours": "26768",
+                  "Spin_Retry_Count": "0",
+                  "Power_Cycle_Count": "111",
+                  "Load_Cycle_Count": "1178",
+                  "Temperature_Celsius": "29",
+                  "Current_Pending_Sector": "0",
+                  "Offline_Uncorrectable": "0",
+                  "UDMA_CRC_Error_Count": "0",
+                  "timestamp": 1741897725
+                }
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      // Zabbix preprocessing script to extract S.M.A.R.T. attributes from smartctl output
+                      function preprocessing(value) {
+                          // Parse input
+                          var lines = value.split(/\n+/);
+                          
+                          // Define the attributes we want to collect
+                          var collectedAttributes = [
+                              "Raw_Read_Error_Rate",
+                              "Reallocated_Sector_Ct", 
+                              "Current_Pending_Sector", 
+                              "Offline_Uncorrectable",
+                              "Spin_Up_Time",
+                              "Spin_Retry_Count",
+                              "Temperature_Celsius",
+                              "Power_On_Hours",
+                              "Start_Stop_Count",
+                              "Power_Cycle_Count",
+                              "Load_Cycle_Count",
+                              "UDMA_CRC_Error_Count"
+                          ];
+                          
+                          // Initialize result object (hash)
+                          var result = {};
+                          
+                          // Extract disk identifier from the first line if available
+                          var disk = "unknown";
+                          var firstLine = lines[0];
+                          if (firstLine) {
+                              var diskMatch = firstLine.match(/\/dev\/disks\/([^\s]+)/);
+                              if (diskMatch && diskMatch[1]) {
+                                  disk = diskMatch[1];
+                                  // Store disk identifier in result
+                                  result.disk = disk;
+                              }
+                          }
+                          
+                          // Process each line looking for S.M.A.R.T. attributes
+                          // This improved regex matches the exact format of the SMART output
+                          var attributeLineRegex = /^\s*(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$/;
+                          
+                          for (var i = 0; i < lines.length; i++) {
+                              var line = lines[i].trim();
+                              var match = line.match(attributeLineRegex);
+                              
+                              if (match) {
+                                  var attributeId = match[1];
+                                  var attributeName = match[2];
+                                  var rawValue = match[10].trim();
+                                  
+                                  // Extract the raw numeric value
+                                  var rawNumeric;
+                                  
+                                  if (rawValue.includes("(")) {
+                                      // For values with parentheses (like temperature), take the first part
+                                      rawNumeric = rawValue.split(" ")[0];
+                                  } else {
+                                      // Otherwise, use the raw value as is
+                                      rawNumeric = rawValue;
+                                  }
+                                  
+                                  // Check if this is an attribute we want to collect
+                                  if (collectedAttributes.indexOf(attributeName) !== -1) {
+                                      // Add raw value to result object
+                                      result[attributeName] = rawNumeric;
+                                  }
+                              }
+                          }
+                          
+                          // Add timestamp
+                          result.timestamp = Math.floor(Date.now() / 1000);
+                          
+                          return JSON.stringify(result);
+                      }
+                      
+                      return preprocessing(value);
+          master_item:
+            key: 'ssh.run[smart]'
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: $.disk
+      macros:
+        - macro: '{$ESXI.SSH.KEY}'
+          value: esxi
+          description: 'SSH root key name'
