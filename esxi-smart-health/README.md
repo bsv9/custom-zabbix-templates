@@ -93,19 +93,3 @@ Put you ssh key and private key to the zabbix server folder
 |Name|Description|Expression|Severity|Dependencies and additional info|
 |----|-----------|----------|--------|--------------------------------|
 |SMART {#NAME}: Current Pending Sector|Triggers when current pending sectors are found, indicating potential bad blocks|last(/ESXI SMART Health/smart.status[{#DISK_ID},Current_Pending_Sector])>0|Average||
-
-## Data Collection
-
-This template collects the following S.M.A.R.T. attributes:
-- Raw_Read_Error_Rate
-- Reallocated_Sector_Ct
-- Current_Pending_Sector
-- Offline_Uncorrectable
-- Spin_Up_Time
-- Spin_Retry_Count
-- Temperature_Celsius
-- Power_On_Hours
-- Start_Stop_Count
-- Power_Cycle_Count
-- Load_Cycle_Count
-- UDMA_CRC_Error_Count
