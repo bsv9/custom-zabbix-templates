@@ -1,0 +1,1348 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 0f0d9e9b220d484da06401415e5af53c
+      name: Templates/Power
+  templates:
+    - uuid: c61965573576478180493d59e6ff38cb
+      template: 'HPE Managed PDU by SNMP'
+      name: 'HPE Managed PDU by SNMP'
+      description: |
+        Zabbix template for HPE Managed (Metered and Switched) PDU.
+        Tested on model P9S18A (230V, 32A, 7.4kVA, 50/60Hz, 24 outlets, 3 sections).
+        MIB: CPQPOWER1.86.MIB - pdu3 branch (.1.3.6.1.4.1.232.165.11).
+
+        Monitors: input power, per-phase/section metrics, per-outlet power,
+        breaker groups, temperature/humidity probes, contact/door sensors.
+
+        Requires SNMPv2c community string.
+      vendor:
+        name: HPE
+        version: 7.4-1.7
+      groups:
+        - name: Templates/Power
+      items:
+        # --- Static Device Identification (poll daily) ---
+        - uuid: fcd3519851ad45079b73d6fe2390e8d6
+          name: 'PDU: Manufacturer'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.2.1.0
+          key: hpePdu.manufacturer
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: 65ebb406cab34bcf80add61bfd65d50c
+          name: 'PDU: Model'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.2.2.0
+          key: hpePdu.model
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: 1276ad9fedee488fa027e6dc6963326a
+          name: 'PDU: Firmware version'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.2.3.0
+          key: hpePdu.firmware
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+          triggers:
+            - uuid: 9557467c24b44f92851caa50807d514d
+              expression: 'change(/HPE Managed PDU by SNMP/hpePdu.firmware)=1 and length(last(/HPE Managed PDU by SNMP/hpePdu.firmware))>0'
+              name: '{HOST.NAME}: Firmware version has changed'
+              priority: INFO
+              description: 'PDU firmware version has changed. Verify the update was intentional.'
+              manual_close: 'YES'
+              tags:
+                - tag: scope
+                  value: notice
+        - uuid: 27cce156c7584c53aae0f30b28d70fea
+          name: 'PDU: Part number'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.2.6.0
+          key: hpePdu.partNumber
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: 19875385aa4e405498803234f74c2818
+          name: 'PDU: Serial number'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.2.7.0
+          key: hpePdu.serial
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: b7a176ed71b64b44a88dbf9d3bb0ae96
+          name: 'PDU: MAC address'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.2.8.0
+          key: hpePdu.mac
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: 6803dd75eedf4eca9d2e32043d1aa088
+          name: 'PDU: Device rating'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.1.2.1.3.1
+          key: hpePdu.rating
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          description: 'PDU electrical rating (e.g. "230V, 32A, 7.4kVA, 50/60Hz")'
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: cf070fe9e89747788e0c875423e096c0
+          name: 'PDU: Device name'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.1.1.3.0
+          key: hpePdu.deviceName
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: f607a672115c49f78ce4cde7ec52dcda
+          name: 'PDU: Outlet count'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.1.2.1.13.1
+          key: hpePdu.outletCount
+          delay: 1d
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: UNSIGNED
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: inventory
+        - uuid: 03fddf1ce254460cb7736d282334f0fc
+          name: 'SNMP traps (fallback)'
+          type: SNMP_TRAP
+          key: snmptrap.fallback
+          delay: '0'
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: LOG
+          logtimefmt: 'hh:mm:sszyyyy/MM/dd'
+          tags:
+            - tag: component
+              value: network
+        # --- SNMP Availability ---
+        - uuid: d756bcd111734d86bd727d505b1933a3
+          name: '{HOST.NAME}: SNMP agent availability'
+          type: INTERNAL
+          key: 'zabbix[host,snmp,available]'
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          valuemap:
+            name: 'SNMP Availability'
+          tags:
+            - tag: component
+              value: network
+          triggers:
+            - uuid: da9421190a884648a8052e3e3997e9ec
+              expression: 'max(/HPE Managed PDU by SNMP/zabbix[host,snmp,available],{$SNMP.TIMEOUT})=0'
+              name: '{HOST.NAME}: No SNMP data collection'
+              priority: WARNING
+              description: 'SNMP is not available for polling. Check SNMP community, device connectivity, and firewall rules.'
+              manual_close: 'YES'
+              tags:
+                - tag: scope
+                  value: availability
+        # --- MIB-II Standard Items ---
+        - uuid: c9cb7773a5e743b4b4822e92537784ee
+          name: 'System description'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.2.1.1.1.0'
+          key: system.descr
+          delay: 1h
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: system
+        - uuid: eedd17c0676e4960941abf3fd2f8bd7f
+          name: 'System name'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.2.1.1.5.0'
+          key: system.name
+          delay: 1h
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: system
+        - uuid: ca48140e783449a59316d9d43856e3ed
+          name: 'System uptime'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.2.1.1.3.0'
+          key: system.uptime
+          delay: 1m
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          units: uptime
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.01'
+          tags:
+            - tag: component
+              value: system
+          triggers:
+            - uuid: 586e5d4e7e794925be438663cd7970d0
+              expression: 'last(/HPE Managed PDU by SNMP/system.uptime)<600 and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Device has been restarted'
+              priority: INFO
+              description: 'Device uptime is less than 10 minutes, indicating a recent restart.'
+              manual_close: 'YES'
+              tags:
+                - tag: scope
+                  value: notice
+        - uuid: e3519a1d76864d59bfde78564a2cd3c4
+          name: 'System contact'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.2.1.1.4.0'
+          key: system.contact
+          delay: 1h
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: system
+        - uuid: a3bcd142e88242dd934ee89d68e813c0
+          name: 'System location'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.2.1.1.6.0'
+          key: system.location
+          delay: 1h
+          history: '{$HISTORY}'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: system
+        # --- Input Power (poll every UPDATEINT) ---
+        - uuid: 6b48ee1a7316421fb255304578f79f2f
+          name: 'Input: Frequency'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.2.1
+          key: hpePdu.input.frequency
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          value_type: FLOAT
+          units: Hz
+          description: 'Input line frequency. Raw value in 0.1 Hz.'
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.1'
+          tags:
+            - tag: component
+              value: power-input
+        - uuid: b2be593c8dc84252a741d159f54728a3
+          name: 'Input: Frequency status'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.3.1
+          key: hpePdu.input.frequencyStatus
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          valuemap:
+            name: 'Frequency Status'
+          tags:
+            - tag: component
+              value: power-input
+          triggers:
+            - uuid: f4ba13d37d3248c6804bd1e9c3c51344
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.input.frequencyStatus)<>1 and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Input frequency out of range'
+              priority: HIGH
+              description: 'Input line frequency is outside acceptable range.'
+              tags:
+                - tag: scope
+                  value: availability
+        - uuid: eba99539cf6a45bcafcd2f845b6d0c03
+          name: 'Input: Apparent power (VA)'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.4.1
+          key: hpePdu.input.powerVA
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          units: VA
+          tags:
+            - tag: component
+              value: power-input
+        - uuid: 9f57fdaf18704663a09aa992110d568a
+          name: 'Input: Active power (W)'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.5.1
+          key: hpePdu.input.powerWatts
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          units: W
+          tags:
+            - tag: component
+              value: power-input
+        - uuid: 9a9e8accbe4d47fc9bdc2af38b89eb7b
+          name: 'Input: Total energy (kWh)'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.6.1
+          key: hpePdu.input.energy
+          delay: '{$UPDATEINT.SLOW}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          units: kWh
+          tags:
+            - tag: component
+              value: power-input
+        - uuid: 7f4c3a5010f24d1691972a96844380c2
+          name: 'Input: Power factor'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.9.1
+          key: hpePdu.input.powerFactor
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          value_type: FLOAT
+          description: 'Input power factor. Raw value in 0.01 units.'
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.01'
+          tags:
+            - tag: component
+              value: power-input
+        - uuid: f689c718b9324b729de5fca34440ae94
+          name: 'Input: Reactive power (VAR)'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.232.165.11.2.1.1.10.1
+          key: hpePdu.input.powerVAR
+          delay: '{$UPDATEINT}'
+          history: '{$HISTORY}'
+          trends: '{$TRENDS}'
+          units: VAR
+          tags:
+            - tag: component
+              value: power-input
+      # ===== DISCOVERY RULES =====
+      discovery_rules:
+        # --- Discovery 1: Input Phase/Section ---
+        - uuid: 94cf2ea3aa7046c2b01c0a4f859ec2e8
+          name: 'Input phase discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#PHASE_INDEX},.1.3.6.1.4.1.232.165.11.2.2.1.1.1,{#PHASE_CURRENT_RATING},.1.3.6.1.4.1.232.165.11.2.2.1.10.1]'
+          key: hpePdu.inputPhase.discovery
+          delay: 1d
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#SNMPINDEX}'
+                value: '^[1-9]'
+              - macro: '{#PHASE_INDEX}'
+                value: '^[1-9]'
+              - macro: '{#PHASE_CURRENT_RATING}'
+                value: '^[1-9]'
+          description: 'Discovers input phases/sections with non-zero current rating. Index 0 (totals row) is excluded by filtering both {#SNMPINDEX} and {#PHASE_INDEX}. Uses {#SNMPINDEX} (OID suffix) for unique keys; {#PHASE_INDEX} (OID value) for display.'
+          item_prototypes:
+            - uuid: ed3fa663b9204bf9be97a19a9e4b2531
+              name: 'Phase {#PHASE_INDEX}: Voltage'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.3.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.voltage[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: V
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: 7ab66da824fc4458bfc70890f8fba4a7
+              name: 'Phase {#PHASE_INDEX}: Current rating'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.10.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.currentRating[{#SNMPINDEX}]'
+              delay: 1d
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: A
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: 8f237c2bf6764fbb8d1198520d2da121
+              name: 'Phase {#PHASE_INDEX}: Current'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.11.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.current[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: A
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: 640148756edf4bf0ac8a36443eecb1ff
+              name: 'Phase {#PHASE_INDEX}: Percent load'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.17.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.percentLoad[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: 97985b58c9604dd0b28a2f13f1039cda
+              name: 'Phase {#PHASE_INDEX}: Apparent power (VA)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.19.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.powerVA[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: VA
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: f36c57df9c0f4089ac9117da52aafd22
+              name: 'Phase {#PHASE_INDEX}: Active power (W)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.20.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.powerWatts[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: W
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: ee42409a94f0453dabd62a7a88b5a989
+              name: 'Phase {#PHASE_INDEX}: Energy (kWh)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.21.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.energy[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT.SLOW}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: kWh
+              tags:
+                - tag: component
+                  value: power-phase
+            - uuid: b0dfcf6d2d8b415986fe0595a9b8b08c
+              name: 'Phase {#PHASE_INDEX}: Power factor'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.2.2.1.23.1.{#SNMPINDEX}'
+              key: 'hpePdu.phase.powerFactor[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: power-phase
+          trigger_prototypes:
+            - uuid: ccf043c0b2e3450f99a6473c4499528b
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.voltage[{#SNMPINDEX}])>{$VOLTAGE.HIGH.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Voltage too high (>{$VOLTAGE.HIGH.WARN}V)'
+              priority: WARNING
+              description: 'Phase voltage exceeds high warning threshold.'
+              tags:
+                - tag: scope
+                  value: performance
+            - uuid: 79f49bf2a1d74e92a087ed4adf2acfd4
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.voltage[{#SNMPINDEX}])<{$VOLTAGE.LOW.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Voltage too low (<{$VOLTAGE.LOW.WARN}V)'
+              priority: WARNING
+              description: 'Phase voltage is below low warning threshold.'
+              tags:
+                - tag: scope
+                  value: performance
+            - uuid: 95aee41420114c7ca09370fd88255681
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.WARN}A'
+              priority: WARNING
+              description: 'Phase current exceeds warning threshold.'
+              tags:
+                - tag: scope
+                  value: capacity
+            - uuid: b4eff5426c1c4686866a3dc528ce2379
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.CRIT} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.CRIT}A'
+              priority: HIGH
+              description: 'Phase current exceeds critical threshold.'
+              dependencies:
+                - name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.WARN}A'
+                  expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              tags:
+                - tag: scope
+                  value: capacity
+            - uuid: 6db8712241df4759bf29c98bf5c8cffe
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.WARN}%'
+              priority: WARNING
+              description: 'Section/phase load exceeds warning threshold.'
+              tags:
+                - tag: scope
+                  value: capacity
+            - uuid: a6f9f713ba0c41069fb48a0dfc6ec65d
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.CRIT} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.CRIT}%'
+              priority: HIGH
+              description: 'Section/phase load exceeds critical threshold.'
+              dependencies:
+                - name: '{HOST.NAME}: Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.WARN}%'
+                  expression: 'last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              tags:
+                - tag: scope
+                  value: capacity
+          graph_prototypes:
+            - uuid: 9b8b84cae916415db241bc666b9372db
+              name: 'Phase {#PHASE_INDEX}: Power'
+              graph_items:
+                - sortorder: '0'
+                  color: 1A7C11
+                  item:
+                    host: 'HPE Managed PDU by SNMP'
+                    key: 'hpePdu.phase.powerWatts[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: 2774A4
+                  item:
+                    host: 'HPE Managed PDU by SNMP'
+                    key: 'hpePdu.phase.powerVA[{#SNMPINDEX}]'
+        # --- Discovery 2: Outlets ---
+        - uuid: 2eb1d97836c24f4585086ebc05ea39f8
+          name: 'Outlet discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#OUTLET_INDEX},.1.3.6.1.4.1.232.165.11.5.1.1.1.1,{#OUTLET_NAME},.1.3.6.1.4.1.232.165.11.5.1.1.2.1]'
+          key: hpePdu.outlet.discovery
+          delay: 1d
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          filter:
+            conditions:
+              - macro: '{#OUTLET_INDEX}'
+                value: '^[1-9][0-9]*$'
+          description: 'Discovers individual outlets on the PDU. Filters out empty slots (index=0).'
+          item_prototypes:
+            - uuid: bdc95d764afd4d28a1c1525b395f60ad
+              name: 'Outlet {#OUTLET_NAME}: Name'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.2.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.name[{#OUTLET_INDEX}]'
+              delay: 1d
+              history: '{$HISTORY}'
+              trends: '0'
+              value_type: CHAR
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: ec16f0c8faaa423ca70de096423be928
+              name: 'Outlet {#OUTLET_NAME}: Type'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.3.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.type[{#OUTLET_INDEX}]'
+              delay: 1d
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              valuemap:
+                name: 'Outlet Type'
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: 285579f9ecd545bc9e419f2ae692c265
+              name: 'Outlet {#OUTLET_NAME}: Current rating'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.4.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.currentRating[{#OUTLET_INDEX}]'
+              delay: 1d
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: A
+              description: 'Outlet rated current capacity. Raw value in 0.01A.'
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: ed4b730732cd49ac92d89321f5dbaf36
+              name: 'Outlet {#OUTLET_NAME}: Current'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.5.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.current[{#OUTLET_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: A
+              description: 'Outlet current draw. Raw value in 0.01A.'
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: 0bb9edea95ed4229850bc46a60a7c5db
+              name: 'Outlet {#OUTLET_NAME}: Percent load'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.11.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.percentLoad[{#OUTLET_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: fb87b0d29f78421f92cbd496cb975977
+              name: 'Outlet {#OUTLET_NAME}: Apparent power (VA)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.12.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.powerVA[{#OUTLET_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: VA
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: fb1d5672118846e6890d47d9dc7f9d01
+              name: 'Outlet {#OUTLET_NAME}: Active power (W)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.13.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.powerWatts[{#OUTLET_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: W
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: a6254fa48bd3463e99cc3c4fffbc0a30
+              name: 'Outlet {#OUTLET_NAME}: Energy (kWh)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.14.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.energy[{#OUTLET_INDEX}]'
+              delay: '{$UPDATEINT.SLOW}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: kWh
+              tags:
+                - tag: component
+                  value: outlet
+            - uuid: a489abc0444b47e3a92f207e6c2c47e9
+              name: 'Outlet {#OUTLET_NAME}: Power factor'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.5.1.1.16.1.{#OUTLET_INDEX}'
+              key: 'hpePdu.outlet.powerFactor[{#OUTLET_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: outlet
+          trigger_prototypes:
+            - uuid: b19be4c61fcd46fd9efe69b2ee1a229a
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.WARN}%'
+              priority: WARNING
+              description: 'Outlet load exceeds warning threshold ({$OUTLET.LOAD.WARN}%).'
+              tags:
+                - tag: scope
+                  value: capacity
+            - uuid: 6efdded8d2a54a4f9d516b5ecfdfd9d1
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.CRIT} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.CRIT}%'
+              priority: HIGH
+              description: 'Outlet load exceeds critical threshold ({$OUTLET.LOAD.CRIT}%).'
+              dependencies:
+                - name: '{HOST.NAME}: Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.WARN}%'
+                  expression: 'last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              tags:
+                - tag: scope
+                  value: capacity
+          graph_prototypes:
+            - uuid: 6d6b80d320ef463999158008a58e84ea
+              name: 'Outlet {#OUTLET_NAME}: Power'
+              graph_items:
+                - sortorder: '0'
+                  color: 1A7C11
+                  item:
+                    host: 'HPE Managed PDU by SNMP'
+                    key: 'hpePdu.outlet.powerWatts[{#OUTLET_INDEX}]'
+                - sortorder: '1'
+                  color: 2774A4
+                  item:
+                    host: 'HPE Managed PDU by SNMP'
+                    key: 'hpePdu.outlet.powerVA[{#OUTLET_INDEX}]'
+        # --- Discovery 3: Breaker Groups ---
+        - uuid: 269ec6e8d42945b0903af5521449cb3e
+          name: 'Breaker group discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#GROUP_INDEX},.1.3.6.1.4.1.232.165.11.3.1.1.1.1,{#GROUP_NAME},.1.3.6.1.4.1.232.165.11.3.1.1.2.1,{#GROUP_BREAKER_STATUS},.1.3.6.1.4.1.232.165.11.3.1.1.26.1]'
+          key: hpePdu.group.discovery
+          delay: 1d
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          filter:
+            conditions:
+              - macro: '{#GROUP_BREAKER_STATUS}'
+                value: '^[2-3]$'
+          description: 'Discovers breaker groups with active breaker status (on or off/tripped).'
+          item_prototypes:
+            - uuid: a1b2c3d4e5f647a8b9c0d1e2f3a4b5c6
+              name: 'Group {#GROUP_NAME}: Voltage'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.5.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.voltage[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: V
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: e9e8caed20ce4fa59e1209d9e6516d6f
+              name: 'Group {#GROUP_NAME}: Current rating'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.11.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.currentRating[{#GROUP_INDEX}]'
+              delay: 1d
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: A
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: 9a574272f4e24cb4997e3afaecc774fc
+              name: 'Group {#GROUP_NAME}: Current'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.12.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.current[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: A
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: 54a82e955836425cb1f0fe3d10ea2715
+              name: 'Group {#GROUP_NAME}: Percent load'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.18.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.percentLoad[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: f4b18ecc5dcf402789c655ded4625036
+              name: 'Group {#GROUP_NAME}: Apparent power (VA)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.19.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.powerVA[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: VA
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: f6a7b8c9d0e142f3a4b5c6d7e8f9a0b1
+              name: 'Group {#GROUP_NAME}: Active power (W)'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.20.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.powerWatts[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: W
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: a7b8c9d0e1f243a4b5c6d7e8f9a0b1c2
+              name: 'Group {#GROUP_NAME}: Power factor'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.23.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.powerFactor[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              value_type: FLOAT
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              tags:
+                - tag: component
+                  value: breaker-group
+            - uuid: 062abe16a8d2492481daacef927442e3
+              name: 'Group {#GROUP_NAME}: Breaker status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.3.1.1.26.1.{#GROUP_INDEX}'
+              key: 'hpePdu.group.breakerStatus[{#GROUP_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              valuemap:
+                name: 'Breaker Status'
+              tags:
+                - tag: component
+                  value: breaker-group
+          trigger_prototypes:
+            - uuid: 87d356e0a5e54e6d8de47efa24f0525f
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.group.breakerStatus[{#GROUP_INDEX}])=3 and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Group {#GROUP_NAME}: Breaker tripped'
+              priority: HIGH
+              description: 'Breaker for group {#GROUP_NAME} has tripped or been turned off.'
+              tags:
+                - tag: scope
+                  value: availability
+        # --- Discovery 4: Temperature Sensors ---
+        - uuid: d24d03b7205d4402846953960d24be6a
+          name: 'Temperature sensor discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#TEMP_INDEX},.1.3.6.1.4.1.232.165.11.4.2.1.1.1,{#TEMP_NAME},.1.3.6.1.4.1.232.165.11.4.2.1.2.1,{#TEMP_PROBE_STATUS},.1.3.6.1.4.1.232.165.11.4.2.1.3.1]'
+          key: hpePdu.temperature.discovery
+          delay: 1d
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#SNMPINDEX}'
+                value: '^[1-9]'
+              - macro: '{#TEMP_INDEX}'
+                value: '^[1-9]'
+              - macro: '{#TEMP_PROBE_STATUS}'
+                value: '^2$'
+          description: 'Discovers connected temperature probes. Only probes with status=2 (connected) are discovered. Index 0 is excluded by filtering both {#SNMPINDEX} and {#TEMP_INDEX}. Uses {#SNMPINDEX} for unique keys; {#TEMP_INDEX} for display.'
+          item_prototypes:
+            - uuid: 2fa57984eaba41b285cf3e4ab651d51f
+              name: 'Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Value'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.4.2.1.4.1.{#SNMPINDEX}'
+              key: 'hpePdu.temp.value[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: C
+              description: 'Temperature reading in degrees Celsius (whole degrees, no scaling).'
+              tags:
+                - tag: component
+                  value: environment
+            - uuid: f2a3b4c5d6e748f9a0b1c2d3e4f5a6b7
+              name: 'Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Probe status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.4.2.1.3.1.{#SNMPINDEX}'
+              key: 'hpePdu.temp.probeStatus[{#SNMPINDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              valuemap:
+                name: 'Probe Status'
+              tags:
+                - tag: component
+                  value: environment
+          trigger_prototypes:
+            - uuid: 7da2046103e4456c86c7009a7bc5fe0a
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.WARN}C'
+              priority: WARNING
+              description: 'Temperature exceeds warning threshold.'
+              tags:
+                - tag: scope
+                  value: environment
+            - uuid: cfc5d27d087842d88564d1b4a82d4ed8
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.CRIT} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.CRIT}C'
+              priority: HIGH
+              description: 'Temperature exceeds critical threshold.'
+              dependencies:
+                - name: '{HOST.NAME}: Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.WARN}C'
+                  expression: 'last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              tags:
+                - tag: scope
+                  value: environment
+            - uuid: 26a420bed8104ca1afa6c425ee767e04
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.temp.probeStatus[{#SNMPINDEX}])<>2 and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Probe disconnected'
+              priority: WARNING
+              description: 'Temperature probe has been disconnected.'
+              tags:
+                - tag: scope
+                  value: availability
+          graph_prototypes:
+            - uuid: b07b23a6db044f618cc32effa3ff54b4
+              name: 'Temperature {#TEMP_NAME} [{#TEMP_INDEX}]'
+              graph_items:
+                - sortorder: '0'
+                  color: F63100
+                  item:
+                    host: 'HPE Managed PDU by SNMP'
+                    key: 'hpePdu.temp.value[{#SNMPINDEX}]'
+        # --- Discovery 5: Humidity Sensors ---
+        - uuid: f8a9b0c1d2e344f5a6b7c8d9e0f1a2b3
+          name: 'Humidity sensor discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#HUMID_INDEX},.1.3.6.1.4.1.232.165.11.4.3.1.1.1,{#HUMID_NAME},.1.3.6.1.4.1.232.165.11.4.3.1.2.1,{#HUMID_PROBE_STATUS},.1.3.6.1.4.1.232.165.11.4.3.1.3.1]'
+          key: hpePdu.humidity.discovery
+          delay: 1d
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          filter:
+            conditions:
+              - macro: '{#HUMID_PROBE_STATUS}'
+                value: '^2$'
+          description: 'Discovers connected humidity probes. Only probes with status=2 (connected) are discovered.'
+          item_prototypes:
+            - uuid: a9b0c1d2e3f445a6b7c8d9e0f1a2b3c4
+              name: 'Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Value'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.4.3.1.4.1.{#HUMID_INDEX}'
+              key: 'hpePdu.humid.value[{#HUMID_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              units: '%RH'
+              description: 'Humidity reading in percent relative humidity (whole units, no scaling).'
+              tags:
+                - tag: component
+                  value: environment
+            - uuid: 478aa743914347319c2d2ea201825508
+              name: 'Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Probe status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.4.3.1.3.1.{#HUMID_INDEX}'
+              key: 'hpePdu.humid.probeStatus[{#HUMID_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              valuemap:
+                name: 'Probe Status'
+              tags:
+                - tag: component
+                  value: environment
+          trigger_prototypes:
+            - uuid: 7881aa791ad942febee1252d8cd4ca18
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.WARN}%RH'
+              priority: WARNING
+              description: 'Humidity exceeds warning threshold.'
+              tags:
+                - tag: scope
+                  value: environment
+            - uuid: 7a94f0d012a749969675f398c019b5f6
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.CRIT} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.CRIT}%RH'
+              priority: HIGH
+              description: 'Humidity exceeds critical threshold.'
+              dependencies:
+                - name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.WARN}%RH'
+                  expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              tags:
+                - tag: scope
+                  value: environment
+            - uuid: 0c677826081146278d9f8f048e416c61
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.WARN}%RH'
+              priority: WARNING
+              description: 'Humidity is below warning threshold.'
+              tags:
+                - tag: scope
+                  value: environment
+            - uuid: 7112855476cf49d7844b362757ed1fd3
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.CRIT} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.CRIT}%RH'
+              priority: HIGH
+              description: 'Humidity is below critical threshold.'
+              dependencies:
+                - name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.WARN}%RH'
+                  expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.WARN} and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              tags:
+                - tag: scope
+                  value: environment
+            - uuid: fc48ca80f6a74d94896bfacd91bd4137
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.humid.probeStatus[{#HUMID_INDEX}])<>2 and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Probe disconnected'
+              priority: WARNING
+              description: 'Humidity probe has been disconnected.'
+              tags:
+                - tag: scope
+                  value: availability
+          graph_prototypes:
+            - uuid: ad05ca87489343d18021d5e9134418ae
+              name: 'Humidity {#HUMID_NAME} [{#HUMID_INDEX}]'
+              graph_items:
+                - sortorder: '0'
+                  color: 2774A4
+                  item:
+                    host: 'HPE Managed PDU by SNMP'
+                    key: 'hpePdu.humid.value[{#HUMID_INDEX}]'
+        # --- Discovery 6: Contact/Door Sensors ---
+        - uuid: 91fa44ec0dd8468ebfec06aa51584695
+          name: 'Contact sensor discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#CONTACT_INDEX},.1.3.6.1.4.1.232.165.11.4.4.1.1.1,{#CONTACT_NAME},.1.3.6.1.4.1.232.165.11.4.4.1.2.1,{#CONTACT_PROBE_STATUS},.1.3.6.1.4.1.232.165.11.4.4.1.3.1]'
+          key: hpePdu.contact.discovery
+          delay: 1d
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          filter:
+            conditions:
+              - macro: '{#CONTACT_PROBE_STATUS}'
+                value: '^2$'
+          description: 'Discovers connected contact/door sensors. Only probes with status=2 (connected) are discovered.'
+          item_prototypes:
+            - uuid: f4a5b6c7d8e940f1a2b3c4d5e6f7a8b9
+              name: 'Contact {#CONTACT_NAME} [{#CONTACT_INDEX}]: State'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.4.4.1.4.1.{#CONTACT_INDEX}'
+              key: 'hpePdu.contact.state[{#CONTACT_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              valuemap:
+                name: 'Contact State'
+              tags:
+                - tag: component
+                  value: environment
+            - uuid: a5b6c7d8e9f041a2b3c4d5e6f7a8b9c0
+              name: 'Contact {#CONTACT_NAME} [{#CONTACT_INDEX}]: Probe status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.232.165.11.4.4.1.3.1.{#CONTACT_INDEX}'
+              key: 'hpePdu.contact.probeStatus[{#CONTACT_INDEX}]'
+              delay: '{$UPDATEINT}'
+              history: '{$HISTORY}'
+              trends: '{$TRENDS}'
+              valuemap:
+                name: 'Probe Status'
+              tags:
+                - tag: component
+                  value: environment
+          trigger_prototypes:
+            - uuid: ff62b274bf2644a68b2beaf81248c601
+              expression: 'last(/HPE Managed PDU by SNMP/hpePdu.contact.state[{#CONTACT_INDEX}])=1 and last(/HPE Managed PDU by SNMP/zabbix[host,snmp,available])=1'
+              name: '{HOST.NAME}: Contact {#CONTACT_NAME} [{#CONTACT_INDEX}]: Door/contact opened'
+              priority: WARNING
+              description: 'Door switch or contact sensor has been opened.'
+              manual_close: 'YES'
+              tags:
+                - tag: scope
+                  value: security
+      tags:
+        - tag: class
+          value: power
+        - tag: target
+          value: pdu
+        - tag: vendor
+          value: hpe
+      macros:
+        # --- Connection / Protocol ---
+        - macro: '{$SNMP_COMMUNITY}'
+          value: public
+          description: 'SNMP community string'
+        - macro: '{$SNMP.TIMEOUT}'
+          value: 5m
+          description: 'SNMP availability check timeout'
+        # --- Polling Intervals ---
+        - macro: '{$UPDATEINT}'
+          value: 60s
+          description: 'Default polling interval'
+        - macro: '{$UPDATEINT.SLOW}'
+          value: 300s
+          description: 'Slow polling interval for energy counters'
+        # --- Retention ---
+        - macro: '{$HISTORY}'
+          value: 90d
+          description: 'Item history retention period'
+        - macro: '{$TRENDS}'
+          value: 365d
+          description: 'Item trends retention period'
+        # --- Input Current Thresholds ---
+        - macro: '{$INPUT.CURRENT.WARN}'
+          value: '25.6'
+          description: 'Input current warning threshold (80% of 32A)'
+        - macro: '{$INPUT.CURRENT.CRIT}'
+          value: '28.8'
+          description: 'Input current critical threshold (90% of 32A)'
+        # --- Voltage Thresholds ---
+        - macro: '{$VOLTAGE.HIGH.WARN}'
+          value: '253'
+          description: 'Input voltage high warning (EU 230V +10%)'
+        - macro: '{$VOLTAGE.LOW.WARN}'
+          value: '207'
+          description: 'Input voltage low warning (EU 230V -10%)'
+        # --- Section/Phase Load Thresholds ---
+        - macro: '{$SECTION.LOAD.WARN}'
+          value: '80'
+          description: 'Section percent load warning threshold'
+        - macro: '{$SECTION.LOAD.CRIT}'
+          value: '90'
+          description: 'Section percent load critical threshold'
+        # --- Outlet Load Thresholds ---
+        - macro: '{$OUTLET.LOAD.WARN}'
+          value: '80'
+          description: 'Outlet percent load warning threshold'
+        - macro: '{$OUTLET.LOAD.CRIT}'
+          value: '90'
+          description: 'Outlet percent load critical threshold'
+        # --- Temperature Thresholds ---
+        - macro: '{$TEMP.HIGH.WARN}'
+          value: '35'
+          description: 'Temperature high warning (C)'
+        - macro: '{$TEMP.HIGH.CRIT}'
+          value: '40'
+          description: 'Temperature high critical (C)'
+        # --- Humidity Thresholds ---
+        - macro: '{$HUMID.HIGH.WARN}'
+          value: '60'
+          description: 'Humidity high warning (%RH)'
+        - macro: '{$HUMID.HIGH.CRIT}'
+          value: '70'
+          description: 'Humidity high critical (%RH)'
+        - macro: '{$HUMID.LOW.WARN}'
+          value: '30'
+          description: 'Humidity low warning (%RH)'
+        - macro: '{$HUMID.LOW.CRIT}'
+          value: '20'
+          description: 'Humidity low critical (%RH)'
+      valuemaps:
+        - uuid: 10632eb98f614fdfa375f906a3348635
+          name: 'Outlet Type'
+          mappings:
+            - value: '1'
+              newvalue: 'IEC C13'
+            - value: '2'
+              newvalue: 'IEC C19'
+            - value: '10'
+              newvalue: UK
+            - value: '11'
+              newvalue: French
+            - value: '12'
+              newvalue: Schuko
+        - uuid: 43fca570d88e4a09b71e2405aa70f4e8
+          name: 'Threshold Status'
+          mappings:
+            - value: '1'
+              newvalue: Good
+            - value: '2'
+              newvalue: 'Low Warning'
+            - value: '3'
+              newvalue: 'Low Critical'
+            - value: '4'
+              newvalue: 'High Warning'
+            - value: '5'
+              newvalue: 'High Critical'
+        - uuid: f92e9c16e18340ebaf30fce7cf1de0cf
+          name: 'Probe Status'
+          mappings:
+            - value: '1'
+              newvalue: Disconnected
+            - value: '2'
+              newvalue: Connected
+            - value: '3'
+              newvalue: Bad
+        - uuid: c6d8bdf7395f45a2929680d9358f352e
+          name: 'Breaker Status'
+          mappings:
+            - value: '1'
+              newvalue: 'Not Applicable'
+            - value: '2'
+              newvalue: 'Breaker On'
+            - value: '3'
+              newvalue: 'Breaker Off'
+        - uuid: 93d6a41fc54c42d8b13c5c0581459035
+          name: 'Contact State'
+          mappings:
+            - value: '1'
+              newvalue: Open
+            - value: '2'
+              newvalue: Closed
+        - uuid: 2f23bdf0b5b14d85bc2af88f0fb00f6a
+          name: 'Input Type'
+          mappings:
+            - value: '1'
+              newvalue: 'Single Phase'
+            - value: '2'
+              newvalue: 'Split Phase'
+            - value: '3'
+              newvalue: 'Three Phase Delta'
+            - value: '4'
+              newvalue: 'Three Phase Wye'
+        - uuid: 0e55f94f6b3b4ad48912f28292927a9f
+          name: 'Frequency Status'
+          mappings:
+            - value: '1'
+              newvalue: Good
+            - value: '2'
+              newvalue: 'Out of Range'
+        - uuid: 4ce629af99124e32a932940bcf1485e3
+          name: 'SNMP Availability'
+          mappings:
+            - value: '0'
+              newvalue: 'Not available'
+            - value: '1'
+              newvalue: Available
+            - value: '2'
+              newvalue: Unknown
+  graphs:
+    - uuid: 5a508bd9fa7d4a8790665d0843b2f036
+      name: 'Input: Power overview'
+      graph_items:
+        - sortorder: '0'
+          color: 1A7C11
+          item:
+            host: 'HPE Managed PDU by SNMP'
+            key: hpePdu.input.powerWatts
+        - sortorder: '1'
+          color: 2774A4
+          item:
+            host: 'HPE Managed PDU by SNMP'
+            key: hpePdu.input.powerVA
