@@ -14,3 +14,6 @@ A template for monitoring the health and performance of HDD storage devices in V
 
 ## [ESXI NVME Health](esxi-nvme-health)
 A template for monitoring the health and performance of NVMe devices in VMware ESXi environments.
+
+## [HPE Managed PDU by SNMP](hpe-pdu)
+A template for comprehensive SNMP monitoring of HPE Managed PDUs including input power, per-outlet metrics, breaker groups, and environmental sensors.
