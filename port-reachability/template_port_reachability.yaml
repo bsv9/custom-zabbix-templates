@@ -1,0 +1,135 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: c28244fd3baa4d88bddd977d8c39f059
+      name: 'Templates/Network'
+  templates:
+    - uuid: 4949a2fae2e74bd3bc767a8fb391696b
+      template: 'Port Reachability'
+      name: 'Port Reachability'
+      description: |
+        Template for checking TCP port reachability from the host.
+        Uses macros {$TCP_CHECKS} and {$NOT_TCP_CHECKS} with CSV format: host1:port1,host2:port2
+        - TCP_CHECKS: ports that SHOULD be reachable (alert if down)
+        - NOT_TCP_CHECKS: ports that should NOT be reachable (alert if up)
+      groups:
+        - name: 'Templates/Network'
+      macros:
+        - macro: '{$TCP_CHECKS}'
+          value: ''
+          description: 'CSV list of host:port that SHOULD be reachable, e.g. srv1:22,srv2:443'
+        - macro: '{$NOT_TCP_CHECKS}'
+          value: ''
+          description: 'CSV list of host:port that should NOT be reachable, e.g. db01:3306,internal:8080'
+        - macro: '{$TCP_CHECK_INTERVAL}'
+          value: '5m'
+          description: 'Interval for port reachability checks'
+        - macro: '{$TCP_DISCOVERY_INTERVAL}'
+          value: '1h'
+          description: 'Interval for discovery of port checks'
+      discovery_rules:
+        - uuid: 0a3998e727b44abfae469fa47c577ae8
+          name: 'TCP port check discovery'
+          type: SCRIPT
+          key: 'tcp.port.check.discovery'
+          delay: '{$TCP_DISCOVERY_INTERVAL}'
+          lifetime: '1d'
+          description: 'Discovers TCP port checks from {$TCP_CHECKS} and {$NOT_TCP_CHECKS} macros'
+          parameters:
+            - name: checks
+              value: '{$TCP_CHECKS}|||{$NOT_TCP_CHECKS}'
+          params: |
+            var input = JSON.parse(value);
+            var parts = input.checks.split('|||');
+            var tcp = parts[0] || '';
+            var not_tcp = parts[1] || '';
+            var result = [];
+            function parse(csv, type) {
+                if (!csv || csv.length === 0) return;
+                var pairs = csv.split(',');
+                for (var i = 0; i < pairs.length; i++) {
+                    var pair = pairs[i].trim();
+                    if (pair.length === 0) continue;
+                    var sep = pair.lastIndexOf(':');
+                    if (sep <= 0) continue;
+                    var host = pair.substring(0, sep);
+                    var port = pair.substring(sep + 1);
+                    result.push({
+                        '{#HOST}': host,
+                        '{#PORT}': port,
+                        '{#LABEL}': pair,
+                        '{#TYPE}': type
+                    });
+                }
+            }
+            parse(tcp, 'reachable');
+            parse(not_tcp, 'not_reachable');
+            return JSON.stringify(result);
+          item_prototypes:
+            - uuid: 1c0e178da08441999c3e272552940705
+              name: 'Port {#LABEL} check ({#TYPE})'
+              type: ZABBIX_ACTIVE
+              key: 'net.tcp.port[{#HOST},{#PORT}]'
+              delay: '{$TCP_CHECK_INTERVAL}'
+              history: '1d'
+              trends: '0'
+              description: 'Checks if port {#PORT} on {#HOST} is reachable.'
+              valuemap:
+                name: 'Service state'
+              tags:
+                - tag: component
+                  value: network
+                - tag: check_type
+                  value: '{#TYPE}'
+          trigger_prototypes:
+            - uuid: 1fb199f0fab140fa8d5197360620058a
+              expression: 'last(/Port Reachability/net.tcp.port[{#HOST},{#PORT}])=0'
+              name: 'Port {#LABEL} is unreachable (should be reachable)'
+              discover: NO_DISCOVER
+              priority: AVERAGE
+              description: 'Port {#PORT} on host {#HOST} is not reachable from this host, but it should be. Check firewall rules and remote service status.'
+              tags:
+                - tag: scope
+                  value: availability
+            - uuid: e7ce8ae5ab944a7083279771a495cd01
+              expression: 'last(/Port Reachability/net.tcp.port[{#HOST},{#PORT}])=1'
+              name: 'Port {#LABEL} is reachable (should NOT be reachable)'
+              discover: NO_DISCOVER
+              priority: AVERAGE
+              description: 'Port {#PORT} on host {#HOST} is reachable from this host, but it should NOT be. Check firewall rules — the port should be blocked.'
+              tags:
+                - tag: scope
+                  value: security
+          overrides:
+            - name: 'Enable reachable trigger'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#TYPE}'
+                    value: 'reachable'
+                    formulaid: A
+              operations:
+                - operationobject: TRIGGER_PROTOTYPE
+                  operator: LIKE
+                  value: 'should be reachable'
+                  discover: DISCOVER
+            - name: 'Enable not reachable trigger'
+              step: '2'
+              filter:
+                conditions:
+                  - macro: '{#TYPE}'
+                    value: 'not_reachable'
+                    formulaid: A
+              operations:
+                - operationobject: TRIGGER_PROTOTYPE
+                  operator: LIKE
+                  value: 'should NOT be reachable'
+                  discover: DISCOVER
+      valuemaps:
+        - uuid: 30d1ba4ade894537bdf9054629408b8a
+          name: 'Service state'
+          mappings:
+            - value: '0'
+              newvalue: Down
+            - value: '1'
+              newvalue: Up

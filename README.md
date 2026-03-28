@@ -12,6 +12,7 @@ A collection of ready-to-import Zabbix templates for monitoring infrastructure c
 | [ESXi SMART Health](esxi-smart-health) | SSH | 7.2+ |
 | [ESXi NVMe Health](esxi-nvme-health) | SSH | 7.2+ |
 | [HPE Managed PDU](hpe-pdu) | SNMP | 7.4+ |
+| [Port Reachability](port-reachability) | Zabbix agent (active) | 7.0+ |
 
 ### Traefik Metrics
 
@@ -36,6 +37,10 @@ Monitor NVMe device health on VMware ESXi hosts over SSH — media errors, tempe
 ### HPE Managed PDU
 
 Comprehensive SNMPv2c monitoring of HPE Managed PDUs: input power, per-outlet and per-phase energy tracking, breaker group status, and environmental sensors (temperature, humidity, contact/door).
+
+### Port Reachability
+
+Verify TCP port reachability from the Zabbix agent host using active checks. Supports both "should be reachable" and "should NOT be reachable" modes for validating firewall rules and detecting unintended service exposure. Configured via simple CSV macros.
 
 ## License
 
