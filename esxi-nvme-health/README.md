@@ -87,9 +87,9 @@ Put you ssh key and private key to the zabbix server folder
 |Name|Description|Expression|Severity|Dependencies and additional info|
 |----|-----------|----------|--------|--------------------------------|
 |NVME {#HBA}: Media errors detected|Triggers when media errors are detected, indicating potential data integrity issues|last(/ESXI NVME Health/nvme.health[{#HBA},MediaErrors])>0|High||
-|NVME {#HBA}: Temperature warning|Triggers when NVMe device temperature exceeds 60°C|last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>60|Warning||
-|NVME {#HBA}: Critical temperature|Triggers when NVMe device temperature exceeds 70°C|last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>70|High|**Depends on**:<br><ul><li>NVME {#HBA}: Temperature warning</li></ul>|
-|NVME {#HBA}: Low spare capacity|Triggers when available spare capacity drops below 20%|last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<20|Warning||
-|NVME {#HBA}: Critical spare capacity|Triggers when available spare capacity drops below 10%|last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<10|High|**Depends on**:<br><ul><li>NVME {#HBA}: Low spare capacity</li></ul>|
-|NVME {#HBA}: High endurance usage|Triggers when percentage of rated write endurance used exceeds 80%|last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>80|Warning||
-|NVME {#HBA}: Critical endurance usage|Triggers when percentage of rated write endurance used exceeds 95%|last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>95|High|**Depends on**:<br><ul><li>NVME {#HBA}: High endurance usage</li></ul>|
+|NVME {#HBA}: Temperature warning|Triggers when NVMe device temperature exceeds 60°C|last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>60|Warning|**Depends on**:<br><ul><li>NVME {#HBA}: Critical temperature</li></ul>|
+|NVME {#HBA}: Critical temperature|Triggers when NVMe device temperature exceeds 70°C|last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>70|High||
+|NVME {#HBA}: Low spare capacity|Triggers when available spare capacity drops below 20%|last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<20|Warning|**Depends on**:<br><ul><li>NVME {#HBA}: Critical spare capacity</li></ul>|
+|NVME {#HBA}: Critical spare capacity|Triggers when available spare capacity drops below 10%|last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<10|High||
+|NVME {#HBA}: High endurance usage|Triggers when percentage of rated write endurance used exceeds 80%|last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>80|Warning|**Depends on**:<br><ul><li>NVME {#HBA}: Critical endurance usage</li></ul>|
+|NVME {#HBA}: Critical endurance usage|Triggers when percentage of rated write endurance used exceeds 95%|last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>95|High||
