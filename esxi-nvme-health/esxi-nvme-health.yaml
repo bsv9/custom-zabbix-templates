@@ -65,6 +65,26 @@ zabbix_export:
               tags:
                 - tag: component
                   value: nvme
+              trigger_prototypes:
+                - uuid: ab7135cd58ef4c14862cb429e4b07ee2
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<20'
+                  name: 'NVME {#HBA}: Low spare capacity'
+                  priority: WARNING
+                  description: 'Available spare capacity dropped below 20%.'
+                  dependencies:
+                    - name: 'NVME {#HBA}: Critical spare capacity'
+                      expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<10'
+                  tags:
+                    - tag: scope
+                      value: availability
+                - uuid: 9b265f85a5334de59ea3316d5f2c56a6
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},AvailableSpare])<10'
+                  name: 'NVME {#HBA}: Critical spare capacity'
+                  priority: HIGH
+                  description: 'Available spare capacity dropped below 10%.'
+                  tags:
+                    - tag: scope
+                      value: availability
             - uuid: 3a4462f002414501bf78fb0e0186f081
               name: 'NVME {#HBA} CompositeTemperature'
               type: DEPENDENT
@@ -79,6 +99,26 @@ zabbix_export:
               tags:
                 - tag: component
                   value: nvme
+              trigger_prototypes:
+                - uuid: f5a2fe2314a44154bc2deb7bb63b1cc0
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>60'
+                  name: 'NVME {#HBA}: Temperature warning'
+                  priority: WARNING
+                  description: 'NVMe device temperature exceeds 60°C.'
+                  dependencies:
+                    - name: 'NVME {#HBA}: Critical temperature'
+                      expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>70'
+                  tags:
+                    - tag: scope
+                      value: availability
+                - uuid: 1abdbcd2c3e3406db1c2fd3acb8da640
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},CompositeTemperature])>70'
+                  name: 'NVME {#HBA}: Critical temperature'
+                  priority: HIGH
+                  description: 'NVMe device temperature exceeds 70°C.'
+                  tags:
+                    - tag: scope
+                      value: availability
             - uuid: b693cd0efd3642918533678f49e95651
               name: 'NVME {#HBA} ControllerBusyTime'
               type: DEPENDENT
@@ -107,6 +147,15 @@ zabbix_export:
               tags:
                 - tag: component
                   value: nvme
+              trigger_prototypes:
+                - uuid: 0ef720a91a734a4e93f0372ba22b1057
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},MediaErrors])>0'
+                  name: 'NVME {#HBA}: Media errors detected'
+                  priority: HIGH
+                  description: 'Media errors detected: data could not be recovered. Check the device and plan replacement.'
+                  tags:
+                    - tag: scope
+                      value: availability
             - uuid: 48ede9ac82744ed69e6e15704b791eb0
               name: 'NVME {#HBA} PercentageUsed'
               type: DEPENDENT
@@ -121,6 +170,26 @@ zabbix_export:
               tags:
                 - tag: component
                   value: nvme
+              trigger_prototypes:
+                - uuid: 1bcea4436c724928965fb75944204f4e
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>80'
+                  name: 'NVME {#HBA}: High endurance usage'
+                  priority: WARNING
+                  description: 'More than 80% of rated write endurance is used.'
+                  dependencies:
+                    - name: 'NVME {#HBA}: Critical endurance usage'
+                      expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>95'
+                  tags:
+                    - tag: scope
+                      value: availability
+                - uuid: bc36bd41745b465c865556998b3fe036
+                  expression: 'last(/ESXI NVME Health/nvme.health[{#HBA},PercentageUsed])>95'
+                  name: 'NVME {#HBA}: Critical endurance usage'
+                  priority: HIGH
+                  description: 'More than 95% of rated write endurance is used.'
+                  tags:
+                    - tag: scope
+                      value: availability
             - uuid: 1c4537245be04a1483d2e1f151595b8b
               name: 'NVME {#HBA} PowerCycles'
               type: DEPENDENT

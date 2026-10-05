@@ -122,10 +122,10 @@ This template has been tested on:
 |----|-----------|----------|--------|--------------------------------|
 |Phase {#PHASE_INDEX}: Voltage too high|Phase voltage exceeds high warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.voltage[{#SNMPINDEX}])>{$VOLTAGE.HIGH.WARN}|Warning||
 |Phase {#PHASE_INDEX}: Voltage too low|Phase voltage is below low warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.voltage[{#SNMPINDEX}])<{$VOLTAGE.LOW.WARN}|Warning||
-|Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.WARN}A|Phase current exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.WARN}|Warning||
-|Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.CRIT}A|Phase current exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.CRIT}|High|**Depends on**: Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.WARN}A|
-|Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.WARN}%|Section/phase load exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.WARN}|Warning||
-|Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.CRIT}%|Section/phase load exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.CRIT}|High|**Depends on**: Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.WARN}%|
+|Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.WARN}A|Phase current exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.WARN}|Warning|**Depends on**: Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.CRIT}A|
+|Phase {#PHASE_INDEX}: Current above {$INPUT.CURRENT.CRIT}A|Phase current exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.current[{#SNMPINDEX}])>{$INPUT.CURRENT.CRIT}|High||
+|Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.WARN}%|Section/phase load exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.WARN}|Warning|**Depends on**: Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.CRIT}%|
+|Phase {#PHASE_INDEX}: Load above {$SECTION.LOAD.CRIT}%|Section/phase load exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.phase.percentLoad[{#SNMPINDEX}])>{$SECTION.LOAD.CRIT}|High||
 
 ### Item prototypes for Outlet discovery
 
@@ -145,8 +145,8 @@ This template has been tested on:
 
 |Name|Description|Expression|Severity|Dependencies and additional info|
 |----|-----------|----------|--------|--------------------------------|
-|Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.WARN}%|Outlet load exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.WARN}|Warning||
-|Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.CRIT}%|Outlet load exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.CRIT}|High|**Depends on**: Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.WARN}%|
+|Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.WARN}%|Outlet load exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.WARN}|Warning|**Depends on**: Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.CRIT}%|
+|Outlet {#OUTLET_NAME}: Load above {$OUTLET.LOAD.CRIT}%|Outlet load exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.outlet.percentLoad[{#OUTLET_INDEX}])>{$OUTLET.LOAD.CRIT}|High||
 
 ### Item prototypes for Breaker group discovery
 
@@ -178,8 +178,8 @@ This template has been tested on:
 
 |Name|Description|Expression|Severity|Dependencies and additional info|
 |----|-----------|----------|--------|--------------------------------|
-|Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.WARN}C|Temperature exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.WARN}|Warning||
-|Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.CRIT}C|Temperature exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.CRIT}|High|**Depends on**: Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.WARN}C|
+|Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.WARN}C|Temperature exceeds warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.WARN}|Warning|**Depends on**: Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.CRIT}C|
+|Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Above {$TEMP.HIGH.CRIT}C|Temperature exceeds critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.temp.value[{#SNMPINDEX}])>{$TEMP.HIGH.CRIT}|High||
 |Temperature {#TEMP_NAME} [{#TEMP_INDEX}]: Probe disconnected|Temperature probe has been disconnected|last(/HPE Managed PDU by SNMP/hpePdu.temp.probeStatus[{#SNMPINDEX}])<>2|Warning||
 
 ### Item prototypes for Humidity sensor discovery
@@ -193,10 +193,10 @@ This template has been tested on:
 
 |Name|Description|Expression|Severity|Dependencies and additional info|
 |----|-----------|----------|--------|--------------------------------|
-|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.WARN}%RH|Humidity exceeds high warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.WARN}|Warning||
-|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.CRIT}%RH|Humidity exceeds high critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.CRIT}|High|**Depends on**: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.WARN}%RH|
-|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.WARN}%RH|Humidity is below low warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.WARN}|Warning||
-|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.CRIT}%RH|Humidity is below low critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.CRIT}|High|**Depends on**: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.WARN}%RH|
+|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.WARN}%RH|Humidity exceeds high warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.WARN}|Warning|**Depends on**: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.CRIT}%RH|
+|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Above {$HUMID.HIGH.CRIT}%RH|Humidity exceeds high critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])>{$HUMID.HIGH.CRIT}|High||
+|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.WARN}%RH|Humidity is below low warning threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.WARN}|Warning|**Depends on**: Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.CRIT}%RH|
+|Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Below {$HUMID.LOW.CRIT}%RH|Humidity is below low critical threshold|last(/HPE Managed PDU by SNMP/hpePdu.humid.value[{#HUMID_INDEX}])<{$HUMID.LOW.CRIT}|High||
 |Humidity {#HUMID_NAME} [{#HUMID_INDEX}]: Probe disconnected|Humidity probe has been disconnected|last(/HPE Managed PDU by SNMP/hpePdu.humid.probeStatus[{#HUMID_INDEX}])<>2|Warning||
 
 ### Item prototypes for Contact sensor discovery

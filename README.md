@@ -28,7 +28,7 @@ Track network device configuration backups and detect changes in real time throu
 
 ### ESXi SMART Health
 
-Monitor HDD/SSD health on VMware ESXi hosts using S.M.A.R.T. attributes over SSH. Requires [smartmontools VIB](https://github.com/op7ic/smartmon-esxi) installed on the host and SSH key authentication.
+Monitor HDD/SSD health on VMware ESXi hosts using S.M.A.R.T. attributes over SSH. Requires the [smartctl VIB](https://github.com/bsv9/smartctl-esxi-vib) installed on the host and SSH key authentication.
 
 ### ESXi NVMe Health
 
